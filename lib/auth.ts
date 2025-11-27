@@ -59,7 +59,7 @@ export async function setUserSession(userId: number) {
   const cookieStore = await cookies();
   cookieStore.set('userId', userId.toString(), {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: false,
     sameSite: 'lax',
     maxAge: 60 * 60 * 24 * 7, // 1 week
   });
