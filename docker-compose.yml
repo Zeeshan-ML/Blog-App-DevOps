@@ -1,20 +1,17 @@
 version: '3.8'
 
 services:
-  # Web Application Service
+  # Web Application Service (Next.js blog)
   web:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: zeeshanml/blog-app   # ✅ Pulls pre-built image from DockerHub
     container_name: blog-app-web
     ports:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-      - NEXT_PUBLIC_BASE_URL=http://localhost:3000
+      - NEXT_PUBLIC_BASE_URL=http://<EC2_PUBLIC_IP>:3000
     volumes:
-      # Mount volume for SQLite database persistence
-      - blog-data:/app/data
+      - blog-data:/app/data   # persistent SQLite database
     restart: unless-stopped
     networks:
       - blog-network
@@ -27,8 +24,7 @@ services:
       retries: 3
       start_period: 40s
 
-  # Database Backup Service (for demonstration of persistent volume)
-  # This container periodically backs up the database
+  # Database Backup Service (persistent volume)
   db-backup:
     image: alpine:latest
     container_name: blog-db-backup
@@ -38,12 +34,10 @@ services:
     command: >
       sh -c "
       while true; do
-        echo 'Database volume is persistent and mounted at /data';
-        echo 'Backup location: /backups';
+        echo 'SQLite volume mounted at /data';
         if [ -f /data/blog.db ]; then
-          echo 'Database file exists: /data/blog.db';
-          cp /data/blog.db /backups/blog-backup-$$(date +%Y%m%d-%H%M%S).db 2>/dev/null || true;
-          echo 'Backup created (if database exists)';
+          cp /data/blog.db /backups/blog-backup-$$(date +%Y%m%d-%H%M%S).db || true;
+          echo 'Backup saved ✅';
         else
           echo 'Database file not yet created';
         fi;
@@ -54,17 +48,14 @@ services:
     networks:
       - blog-network
 
-# Named volumes for data persistence
+# Named volumes for persistence
 volumes:
-  # Main volume for SQLite database
   blog-data:
     driver: local
     driver_opts:
       type: none
       o: bind
       device: ./data
-  
-  # Volume for database backups
   blog-backups:
     driver: local
     driver_opts:
