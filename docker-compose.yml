@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  # Web Application Service
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: blog-app-web
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_BASE_URL=http://localhost:3000
+    volumes:
+      # Mount volume for SQLite database persistence
+      - blog-data:/app/data
+    restart: unless-stopped
+    networks:
+      - blog-network
+    depends_on:
+      - db-backup
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Database Backup Service (for demonstration of persistent volume)
+  # This container periodically backs up the database
+  db-backup:
+    image: alpine:latest
+    container_name: blog-db-backup
+    volumes:
+      - blog-data:/data
+      - blog-backups:/backups
+    command: >
+      sh -c "
+      while true; do
+        echo 'Database volume is persistent and mounted at /data';
+        echo 'Backup location: /backups';
+        if [ -f /data/blog.db ]; then
+          echo 'Database file exists: /data/blog.db';
+          cp /data/blog.db /backups/blog-backup-$$(date +%Y%m%d-%H%M%S).db 2>/dev/null || true;
+          echo 'Backup created (if database exists)';
+        else
+          echo 'Database file not yet created';
+        fi;
+        sleep 3600;
+      done
+      "
+    restart: unless-stopped
+    networks:
+      - blog-network
+
+# Named volumes for data persistence
+volumes:
+  # Main volume for SQLite database
+  blog-data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./data
+  
+  # Volume for database backups
+  blog-backups:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ./backups
+
+# Network for inter-container communication
+networks:
+  blog-network:
+    driver: bridge
