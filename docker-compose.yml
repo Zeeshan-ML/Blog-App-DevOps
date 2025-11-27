@@ -3,15 +3,16 @@ version: '3.8'
 services:
   # Web Application Service (Next.js blog)
   web:
-    image: zeeshanml/blog-app   # ✅ Pulls pre-built image from DockerHub
-    container_name: blog-app-web
+    image: zeeshanml/blog-app
+    container_name: blog-app-web-ci   # ✅ Different container name for CI/CD
     ports:
-      - "3000:3000"
+      - "3100:3000"   # ✅ Different port for CI/CD deployment
     environment:
       - NODE_ENV=production
-      - NEXT_PUBLIC_BASE_URL=http://100.31.20.109:3000   # ✅ Updated for EC2 public IP
+      - NEXT_PUBLIC_BASE_URL=http://100.31.20.109:3100  # ✅ Update for CI/CD port
     volumes:
-      - blog-data:/app/data   # persistent SQLite database
+      - ./app:/app    # ✅ Mount code from Jenkins workspace
+      - blog-data:/app/data
     restart: unless-stopped
     networks:
       - blog-network
@@ -24,24 +25,20 @@ services:
       retries: 3
       start_period: 40s
 
-  # Database Backup Service (persistent volume)
+  # Database Backup Service
   db-backup:
     image: alpine:latest
-    container_name: blog-db-backup
+    container_name: blog-db-backup-ci   # ✅ Different container name
     volumes:
       - blog-data:/data
       - blog-backups:/backups
     command: >
       sh -c "
       while true; do
-        echo 'SQLite volume mounted at /data';
         if [ -f /data/blog.db ]; then
-          cp /data/blog.db /backups/blog-backup-$$(date +%Y%m%d-%H%M%S).db || true;
-          echo 'Backup saved ✅';
-        else
-          echo 'Database file not yet created';
-        fi;
-        sleep 3600;
+          cp /data/blog.db /backups/blog-backup-$$(date +%Y%m%d-%H%M%S).db || true
+        fi
+        sleep 3600
       done
       "
     restart: unless-stopped
@@ -51,17 +48,7 @@ services:
 # Named volumes for persistence
 volumes:
   blog-data:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ./data
   blog-backups:
-    driver: local
-    driver_opts:
-      type: none
-      o: bind
-      device: ./backups
 
 # Network for inter-container communication
 networks:
