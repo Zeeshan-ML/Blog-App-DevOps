@@ -20,7 +20,7 @@ export default async function Home() {
           </h1>
           <p className="text-xl md:text-2xl text-gray-700 mb-10 max-w-3xl mx-auto leading-relaxed font-light">
             A vibrant community where writers share their thoughts, stories, and expertise. 
-            Join thousands of creators and readers discovering amazing content every day..
+            Join thousands of creators and readers discovering amazing content every day...
           </p>
           {user ? (
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
