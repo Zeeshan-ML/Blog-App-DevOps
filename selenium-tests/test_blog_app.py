@@ -1,3 +1,4 @@
+# File: blog-app/selenium-tests/test_blog_app.py
 import pytest
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -7,7 +8,7 @@ from selenium.webdriver.chrome.options import Options
 import time
 
 # Base URL of your application (update this)
-BASE_URL = "http://localhost:3000"
+BASE_URL = "http://100.31.20.109:3000"
 
 @pytest.fixture
 def driver():
@@ -32,7 +33,7 @@ class TestBlogApp:
     def test_homepage_loads(self, driver):
         """Test if homepage loads without errors"""
         driver.get(BASE_URL)
-        assert "Blog" in driver.title or "Home" in driver.page_source
+        assert "Next App" in driver.title or "Share Your Story" in driver.page_source
         print("✓ Test 1 Passed: Homepage loads successfully")
     
     # Test 2: Navigation to signup page

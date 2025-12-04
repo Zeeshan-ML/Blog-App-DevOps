@@ -1,9 +1,10 @@
+// File: blog-app/selenium-tests/Jenkinsfile
 pipeline {
     agent any
     
     environment {
         DOCKER_IMAGE = 'blog-app-tests'
-        APP_URL = 'http://localhost:3000'
+        APP_URL = 'http://100.31.20.109:3000'  // Your application EC2 IP
     }
     
     stages {
@@ -21,19 +22,6 @@ pipeline {
                     script {
                         docker.build("${DOCKER_IMAGE}:${BUILD_NUMBER}")
                     }
-                }
-            }
-        }
-        
-        stage('Run Application') {
-            steps {
-                echo 'Starting application container...'
-                script {
-                    // Start your blog app container
-                    sh '''
-                        docker compose up -d
-                        sleep 10
-                    '''
                 }
             }
         }
@@ -75,8 +63,25 @@ pipeline {
     post {
         always {
             echo 'Cleaning up...'
-            sh 'docker compose down || true'
             sh "docker rmi ${DOCKER_IMAGE}:${BUILD_NUMBER} || true"
+            
+            // Email notification
+            emailext(
+                subject: "Jenkins Build ${currentBuild.result}: ${env.JOB_NAME} - Build #${env.BUILD_NUMBER}",
+                body: """
+                    <h2>Build ${currentBuild.result}</h2>
+                    <p><b>Project:</b> ${env.JOB_NAME}</p>
+                    <p><b>Build Number:</b> ${env.BUILD_NUMBER}</p>
+                    <p><b>Build URL:</b> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
+                    <p><b>Test Report:</b> <a href="${env.BUILD_URL}Selenium_20Test_20Report/">View Report</a></p>
+                    <p><b>Committed by:</b> ${env.GIT_COMMITTER_NAME}</p>
+                    <hr>
+                    <p>${currentBuild.result == 'SUCCESS' ? 'All tests passed!' : 'Some tests failed. Check the report.'}</p>
+                """,
+                to: "${env.GIT_COMMITTER_EMAIL}",
+                mimeType: 'text/html',
+                attachLog: true
+            )
         }
         success {
             echo 'Pipeline completed successfully!'
