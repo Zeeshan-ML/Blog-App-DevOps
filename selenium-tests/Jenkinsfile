@@ -34,6 +34,7 @@ pipeline {
                         sh """
                             docker run --rm \
                                 --network host \
+                                -v \$(pwd)/selenium-tests:/tests \
                                 -e BASE_URL=${APP_URL} \
                                 ${DOCKER_IMAGE}:${BUILD_NUMBER}
                         """
