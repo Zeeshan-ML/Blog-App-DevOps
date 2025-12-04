@@ -65,22 +65,29 @@ pipeline {
             echo 'Cleaning up...'
             sh "docker rmi ${DOCKER_IMAGE}:${BUILD_NUMBER} || true"
             
-            // Email notification
-            emailext(
-                subject: "Jenkins Build ${currentBuild.result}: ${env.JOB_NAME} - Build #${env.BUILD_NUMBER}",
-                body: """
-                    <h2>Build ${currentBuild.result}</h2>
-                    <p><b>Project:</b> ${env.JOB_NAME}</p>
-                    <p><b>Build Number:</b> ${env.BUILD_NUMBER}</p>
-                    <p><b>Build URL:</b> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
-                    <p><b>Test Report:</b> <a href="${env.BUILD_URL}Selenium_20Test_20Report/">View Report</a></p>
-                    <hr>
-                    <p>${currentBuild.result == 'SUCCESS' ? 'All tests passed!' : 'Some tests failed. Check the report.'}</p>
-                """,
-                recipientProviders: [culprits(), developers(), requestor()],
-                mimeType: 'text/html',
-                attachLog: true
-            )
+            // Email notification - extract Git author email directly
+            script {
+                def gitAuthorEmail = sh(
+                    script: "git log -1 --pretty=format:'%ae'",
+                    returnStdout: true
+                ).trim()
+                
+                emailext(
+                    subject: "Jenkins Build ${currentBuild.result}: ${env.JOB_NAME} - Build #${env.BUILD_NUMBER}",
+                    body: """
+                        <h2>Build ${currentBuild.result}</h2>
+                        <p><b>Project:</b> ${env.JOB_NAME}</p>
+                        <p><b>Build Number:</b> ${env.BUILD_NUMBER}</p>
+                        <p><b>Build URL:</b> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
+                        <p><b>Test Report:</b> <a href="${env.BUILD_URL}Selenium_20Test_20Report/">View Report</a></p>
+                        <hr>
+                        <p>${currentBuild.result == 'SUCCESS' ? 'All tests passed!' : 'Some tests failed. Check the report.'}</p>
+                    """,
+                    to: gitAuthorEmail,
+                    mimeType: 'text/html',
+                    attachLog: true
+                )
+            }
         }
         success {
             echo 'Pipeline completed successfully!'
