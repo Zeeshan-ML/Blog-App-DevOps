@@ -101,7 +101,7 @@ export default async function Home() {
                 href="/signup"
                 className="inline-block bg-white hover:bg-gray-100 text-indigo-600 px-10 py-4 rounded-xl text-lg font-bold transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
               >
-                Create Your Account.
+                Create Your Account..
               </Link>
             )}
           </div>
