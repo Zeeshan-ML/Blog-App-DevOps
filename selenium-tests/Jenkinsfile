@@ -74,11 +74,10 @@ pipeline {
                     <p><b>Build Number:</b> ${env.BUILD_NUMBER}</p>
                     <p><b>Build URL:</b> <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>
                     <p><b>Test Report:</b> <a href="${env.BUILD_URL}Selenium_20Test_20Report/">View Report</a></p>
-                    <p><b>Committed by:</b> ${env.GIT_COMMITTER_NAME}</p>
                     <hr>
                     <p>${currentBuild.result == 'SUCCESS' ? 'All tests passed!' : 'Some tests failed. Check the report.'}</p>
                 """,
-                to: "${env.GIT_COMMITTER_EMAIL}",
+                recipientProviders: [culprits(), developers(), requestor()],
                 mimeType: 'text/html',
                 attachLog: true
             )
