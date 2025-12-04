@@ -94,7 +94,7 @@ export default async function Home() {
               Ready to Share Your Voice?
             </h2>
             <p className="text-xl text-indigo-100 mb-8 max-w-2xl mx-auto">
-              Join our community today and start publishing your stories to the world..
+              Join our community today and start publishing your stories to the world...
             </p>
             {!user && (
               <Link
