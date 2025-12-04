@@ -5,6 +5,8 @@ pipeline {
     environment {
         DOCKER_IMAGE = 'blog-app-tests'
         APP_URL = 'http://100.31.20.109:3000'  // Your application EC2 IP
+        APP_IMAGE = 'zeeshanml/blog-app'
+        NEW_PORT = '3001'
     }
     
     stages {
@@ -12,6 +14,24 @@ pipeline {
             steps {
                 echo 'Checking out code from GitHub...'
                 checkout scm
+            }
+        }
+        
+        stage('Deploy Updated App') {
+            steps {
+                echo 'Deploying updated application on port 3001...'
+                script {
+                    sh """
+                        docker pull ${APP_IMAGE}:latest
+                        docker stop blog-app-new || true
+                        docker rm blog-app-new || true
+                        docker run -d --name blog-app-new -p ${NEW_PORT}:3000 \
+                            -v blog-data-new:/app/data \
+                            --network bridge \
+                            ${APP_IMAGE}:latest
+                        sleep 10
+                    """
+                }
             }
         }
         
@@ -28,14 +48,14 @@ pipeline {
         
         stage('Run Tests') {
             steps {
-                echo 'Running Selenium tests...'
+                echo 'Running Selenium tests on newly deployed app...'
                 script {
                     try {
                         sh """
                             docker run --rm \
                                 --network host \
                                 -v \$(pwd)/selenium-tests:/tests \
-                                -e BASE_URL=${APP_URL} \
+                                -e BASE_URL=http://100.31.20.109:${NEW_PORT} \
                                 ${DOCKER_IMAGE}:${BUILD_NUMBER}
                         """
                     } catch (Exception e) {
