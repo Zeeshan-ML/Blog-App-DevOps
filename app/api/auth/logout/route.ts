@@ -1,11 +1,13 @@
 import { NextResponse } from 'next/server';
 import { clearUserSession } from '@/lib/auth';
 
-export async function POST() {
+export async function POST(request: Request) {
   try {
     await clearUserSession();
 
-    return NextResponse.redirect(new URL('/', process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'));
+    // Get the origin from the request to work on any domain
+    const origin = new URL(request.url).origin;
+    return NextResponse.redirect(new URL('/', origin));
   } catch (error) {
     console.error('Logout error:', error);
     return NextResponse.json(
@@ -15,6 +17,6 @@ export async function POST() {
   }
 }
 
-export async function GET() {
-  return POST();
+export async function GET(request: Request) {
+  return POST(request);
 }
