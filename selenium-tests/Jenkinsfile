@@ -17,18 +17,28 @@ pipeline {
             }
         }
         
+        stage('Build App Image') {
+            steps {
+                echo 'Building Docker image from latest GitHub code...'
+                script {
+                    sh """
+                        docker build -t ${APP_IMAGE}:build-${BUILD_NUMBER} .
+                    """
+                }
+            }
+        }
+        
         stage('Deploy Updated App') {
             steps {
                 echo 'Deploying updated application on port 3001...'
                 script {
                     sh """
-                        docker pull ${APP_IMAGE}:latest
                         docker stop blog-app-new || true
                         docker rm blog-app-new || true
                         docker run -d --name blog-app-new -p ${NEW_PORT}:3000 \
                             -v blog-data-new:/app/data \
                             --network bridge \
-                            ${APP_IMAGE}:latest
+                            ${APP_IMAGE}:build-${BUILD_NUMBER}
                         sleep 10
                     """
                 }
@@ -84,7 +94,10 @@ pipeline {
     post {
         always {
             echo 'Cleaning up...'
-            sh "docker rmi ${DOCKER_IMAGE}:${BUILD_NUMBER} || true"
+            sh """
+                docker rmi ${DOCKER_IMAGE}:${BUILD_NUMBER} || true
+                docker rmi ${APP_IMAGE}:build-${BUILD_NUMBER} || true
+            """
             
             // Email notification - extract Git author email directly
             script {
