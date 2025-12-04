@@ -4,7 +4,7 @@ pipeline {
     
     environment {
         DOCKER_IMAGE = 'blog-app-tests'
-        APP_URL = 'http://100.31.20.109:3000'  // Your application EC2 IP
+        APP_URL = 'http://3.232.241.183:3000'  // Your application EC2 IP
         APP_IMAGE = 'zeeshanml/blog-app'
         NEW_PORT = '3001'
     }
