@@ -1,0 +1,88 @@
+pipeline {
+    agent any
+    
+    environment {
+        DOCKER_IMAGE = 'blog-app-tests'
+        APP_URL = 'http://localhost:3000'
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                echo 'Checking out code from GitHub...'
+                checkout scm
+            }
+        }
+        
+        stage('Build Test Image') {
+            steps {
+                echo 'Building Docker image for tests...'
+                dir('selenium-tests') {
+                    script {
+                        docker.build("${DOCKER_IMAGE}:${BUILD_NUMBER}")
+                    }
+                }
+            }
+        }
+        
+        stage('Run Application') {
+            steps {
+                echo 'Starting application container...'
+                script {
+                    // Start your blog app container
+                    sh '''
+                        docker compose up -d
+                        sleep 10
+                    '''
+                }
+            }
+        }
+        
+        stage('Run Tests') {
+            steps {
+                echo 'Running Selenium tests...'
+                script {
+                    try {
+                        sh """
+                            docker run --rm \
+                                --network host \
+                                -e BASE_URL=${APP_URL} \
+                                ${DOCKER_IMAGE}:${BUILD_NUMBER}
+                        """
+                    } catch (Exception e) {
+                        echo "Tests failed: ${e.message}"
+                        currentBuild.result = 'UNSTABLE'
+                    }
+                }
+            }
+        }
+        
+        stage('Generate Report') {
+            steps {
+                echo 'Generating test report...'
+                publishHTML([
+                    allowMissing: false,
+                    alwaysLinkToLastBuild: true,
+                    keepAll: true,
+                    reportDir: 'selenium-tests',
+                    reportFiles: 'report.html',
+                    reportName: 'Selenium Test Report'
+                ])
+            }
+        }
+    }
+    
+    post {
+        always {
+            echo 'Cleaning up...'
+            sh 'docker compose down || true'
+            sh "docker rmi ${DOCKER_IMAGE}:${BUILD_NUMBER} || true"
+        }
+        success {
+            echo 'Pipeline completed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed!'
+        }
+    }
+}

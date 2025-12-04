@@ -44,3 +44,16 @@ next-env.d.ts
 *.db
 *.db-shm
 *.db-wal
+
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+*.egg-info/
+
+# Selenium
+selenium-tests/report.html
+selenium-tests/.pytest_cache/

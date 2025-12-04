@@ -1,3 +1,4 @@
+// File: blog-app/app/page.tsx
 import Link from 'next/link';
 import { getUserSession } from '@/lib/auth';
 import Navbar from '@/components/Navbar';
